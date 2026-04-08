@@ -5,9 +5,9 @@ namespace FirstProject.Endpoints;
 public static class GamesEndpoints
 {
     private static readonly List<GameDto> games = [
-        new (1, "Dota1", 15.15m),
-        new (2, "Dota2", 16.16m),
-        new (3, "Dota3", 17.17m)
+        new (1, "Dota1", 15.15m, "MOBA"),
+        new (2, "Dota2", 16.16m, "MOBA"),
+        new (3, "Dota3", 17.17m, "MOBA")
     ];
 
     public static void MapGamesEndpoints(this WebApplication app)
@@ -35,7 +35,8 @@ public static class GamesEndpoints
             GameDto NewGame = new (
                 games.Count + 1, 
                 game.Name,
-                game.Cost
+                game.Cost,
+                game.Genre
             );
 
             games.Add(NewGame);
@@ -49,7 +50,8 @@ public static class GamesEndpoints
             games[id -1] = new GameDto(
                 id,
                 updateGameData.Name,
-                updateGameData.Cost
+                updateGameData.Cost,
+                updateGameData.Genre
             );
 
             return Results.NoContent();
