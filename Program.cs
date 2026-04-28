@@ -6,9 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddValidation();
 
-var conString = builder.Configuration.GetConnectionString("GameStore");
-
-builder.Services.AddSqlite<GameStoreContext>(conString);
+builder.SeedGenresDB();
 
 var app = builder.Build();
 
@@ -16,6 +14,8 @@ var app = builder.Build();
 
 
 app.MapGamesEndpoints();
+
+app.MapGenresEndpoints();
 
 app.MigrateDb();
 

@@ -8,5 +8,5 @@ public record CreateGameDto
 
     [Required] [Range(0, 10000)] decimal Cost,
 
-    [Required] [StringLength(50)] string Genre
+    [Required] int GenreId
 );
