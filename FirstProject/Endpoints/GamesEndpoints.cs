@@ -1,0 +1,99 @@
+using FirstProject.Data;
+using FirstProject.Dtos;
+using FirstProject.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace FirstProject.Endpoints;
+
+public static class GamesEndpoints
+{
+
+    public static void MapGamesEndpoints(this WebApplication app)
+    {
+        var group = app.MapGroup("/games");
+
+        // GET /games 
+        const string GetAllGames = "GetAllGames";
+        group.MapGet("/", async (GameStoreContext DBContext) =>
+        {
+            return await DBContext.Games
+                .Include(game => game.Genre)
+                .Select(game => new GameDto(
+                    game.Id,
+                    game.Name,
+                    game.Cost,
+                    game.Genre!.Name
+                ))
+                    .AsNoTracking()
+                    .ToListAsync(); 
+        }).WithName(GetAllGames);
+
+        // GET /games/{id}
+        const string GetGameById = "GetGameById";
+        group.MapGet("/{id}", async (int id, GameStoreContext DBContext) =>
+        {
+            var game = await DBContext.Games.FindAsync(id);
+
+            return game is null ? Results.NotFound() : Results.Ok(new GameSerializeDto(
+                game.Id,
+                game.Name,
+                game.Cost,
+                game.GenreId
+                // DBContext.Genres.Find(game.GenreId)!.Name
+            ));
+        }).WithName(GetGameById);
+
+        // POST /games
+        const string CreateGame = "CreateGame";
+        group.MapPost("/", async (CreateGameDto game, GameStoreContext DBContext) => {
+            
+            Game NewGame = new ()
+            {
+                Name = game.Name,
+                Cost = game.Cost,
+                GenreId = game.GenreId  
+            };
+
+            DBContext.Games.Add(NewGame);
+            await DBContext.SaveChangesAsync();
+
+            GameSerializeDto NewGameDto = new (
+                    NewGame.Id,
+                    NewGame.Name,
+                    NewGame.Cost,
+                    NewGame.GenreId
+            );
+
+
+            // return Results.CreatedAtRoute();
+            return Results.CreatedAtRoute(GetGameById, new {id = NewGameDto.Id}, NewGameDto);
+        }).WithName(CreateGame);
+
+        // PUT /games/{id}
+        const string UpdateGame = "UpdateGame";
+        group.MapPut("/{id}", async (int id, UpdateGameDto updateGameData, GameStoreContext DBContext) =>
+        {
+            var game = await DBContext.Games.FindAsync(id);
+
+
+            if (game is null) return Results.NotFound();
+
+            game.Name = updateGameData.Name;
+            game.Cost = updateGameData.Cost;
+            game.GenreId = updateGameData.GenreId;
+            await DBContext.SaveChangesAsync();
+
+            return Results.NoContent();
+        }).WithName(UpdateGame);
+
+        // DELETE /games/{id}
+        const string DeleteGame = "DeleteGame";
+        group.MapDelete("/{id}", async (int id, GameStoreContext DBContext) =>
+        {
+            var game = await DBContext.Games.Where(game => game.Id == id).ExecuteDeleteAsync();
+            
+            return Results.NoContent();
+        }).WithName(DeleteGame);
+    }
+}
